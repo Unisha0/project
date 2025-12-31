@@ -1,0 +1,17 @@
+[
+  {"complaint_text":"road full of potholes","department":"Road","location":"Kathmandu","severity":"high"},
+  {"complaint_text":"accident due to bad road","department":"Road","location":"Bhaktapur","severity":"high"},
+  {"complaint_text":"road digging for months","department":"Road","location":"Lalitpur","severity":"medium"},
+  {"complaint_text":"water logging after rain","department":"Road","location":"Biratnagar","severity":"medium"},
+  {"complaint_text":"open manhole","department":"Road","location":"Hetauda","severity":"high"},
+  {"complaint_text":"broken footpath","department":"Road","location":"Pokhara","severity":"high"},
+  {"complaint_text":"no drainage system","department":"Road","location":"Janakpur","severity":"medium"},
+  {"complaint_text":"unfinished road work","department":"Road","location":"Dharan","severity":"medium"},
+  {"complaint_text":"road very dusty","department":"Road","location":"Kathmandu","severity":"medium"},
+  {"complaint_text":"traffic jam daily","department":"Road","location":"Lalitpur","severity":"medium"},
+  {"complaint_text":"road flooded","department":"Road","location":"Birgunj","severity":"high"},
+  {"complaint_text":"construction blocking road","department":"Road","location":"Pokhara","severity":"medium"},
+  {"complaint_text":"pothole near school","department":"Road","location":"Bhaktapur","severity":"high"},
+  {"complaint_text":"no footpath for walking","department":"Road","location":"Kathmandu","severity":"high"},
+  {"complaint_text":"manhole cover missing","department":"Road","location":"Hetauda","severity":"high"}
+]

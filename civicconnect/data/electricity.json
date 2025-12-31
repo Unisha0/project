@@ -1,0 +1,17 @@
+[
+  {"complaint_text":"light going on and off","department":"Electricity","location":"Kathmandu","severity":"high"},
+  {"complaint_text":"frequent power cut","department":"Electricity","location":"Lalitpur","severity":"medium"},
+  {"complaint_text":"voltage very low","department":"Electricity","location":"Pokhara","severity":"medium"},
+  {"complaint_text":"appliances damaged","department":"Electricity","location":"Biratnagar","severity":"high"},
+  {"complaint_text":"street light not working","department":"Electricity","location":"Bhaktapur","severity":"medium"},
+  {"complaint_text":"power cut whole evening","department":"Electricity","location":"Janakpur","severity":"high"},
+  {"complaint_text":"open wire hanging","department":"Electricity","location":"Nepalgunj","severity":"high"},
+  {"complaint_text":"transformer making noise","department":"Electricity","location":"Dharan","severity":"medium"},
+  {"complaint_text":"bill too high","department":"Electricity","location":"Kathmandu","severity":"medium"},
+  {"complaint_text":"meter not working","department":"Electricity","location":"Hetauda","severity":"medium"},
+  {"complaint_text":"voltage fluctuation","department":"Electricity","location":"Butwal","severity":"high"},
+  {"complaint_text":"frequent load shedding","department":"Electricity","location":"Pokhara","severity":"medium"},
+  {"complaint_text":"no electricity at night","department":"Electricity","location":"Birgunj","severity":"high"},
+  {"complaint_text":"repair team not coming","department":"Electricity","location":"Lalitpur","severity":"medium"},
+  {"complaint_text":"street light broken","department":"Electricity","location":"Kathmandu","severity":"medium"}
+]
