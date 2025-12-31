@@ -20,8 +20,6 @@ from transformers import (
 # ------------------------------
 data_file = "data/merged_complaints.csv"  # path to your CSV
 df = pd.read_csv(data_file)
-
-# Remove empty texts
 df = df.dropna(subset=['text', 'label'])
 
 # Encode labels
@@ -29,10 +27,12 @@ le = LabelEncoder()
 df['label'] = le.fit_transform(df['label'])
 label_names = le.classes_.tolist()
 
-# Save temp CSV for HuggingFace
+# Save temp CSV for HuggingFace dataset
 os.makedirs("data", exist_ok=True)
-df.to_csv("data/temp.csv", index=False)
-dataset = load_dataset('csv', data_files='data/temp.csv', split='train')
+temp_csv = "data/temp.csv"
+df.to_csv(temp_csv, index=False)
+
+dataset = load_dataset('csv', data_files=temp_csv, split='train')
 dataset = dataset.train_test_split(test_size=0.2, seed=42)
 
 # ------------------------------
@@ -59,10 +59,10 @@ model = DistilBertForSequenceClassification.from_pretrained(
 # ------------------------------
 training_args = TrainingArguments(
     output_dir="./results",
-    num_train_epochs=5,                  # train longer for better accuracy
-    per_device_train_batch_size=16,      # bigger batch if memory allows
+    num_train_epochs=5,
+    per_device_train_batch_size=16,
     per_device_eval_batch_size=16,
-    learning_rate=5e-5,                  # typical fine-tuning learning rate
+    learning_rate=5e-5,
     weight_decay=0.01,
     evaluation_strategy="epoch",
     save_strategy="epoch",
@@ -94,8 +94,9 @@ trainer = Trainer(
 )
 
 # ------------------------------
-# 7️⃣ Train
+# 7️⃣ Train the model
 # ------------------------------
+print("🚀 Starting training...")
 trainer.train()
 
 # ------------------------------
@@ -105,7 +106,6 @@ model_dir = "best_model"
 os.makedirs(model_dir, exist_ok=True)
 model.save_pretrained(model_dir)
 tokenizer.save_pretrained(model_dir)
-
 with open(os.path.join(model_dir, "labels.txt"), "w") as f:
     for label in label_names:
         f.write(f"{label}\n")
@@ -113,37 +113,74 @@ with open(os.path.join(model_dir, "labels.txt"), "w") as f:
 print("✅ Training completed and best model saved!")
 
 # ------------------------------
-# 9️⃣ Evaluate best model
+## ------------------------------
+# 9️⃣ Evaluate model & save for analysis
 # ------------------------------
 preds_output = trainer.predict(encoded_dataset['test'])
 preds = np.argmax(preds_output.predictions, axis=1)
 true_labels = preds_output.label_ids
+probs = torch.nn.functional.softmax(torch.tensor(preds_output.predictions), dim=-1).numpy()
 
-print("\n📊 Classification Report:")
-print(classification_report(true_labels, preds, target_names=label_names))
+# Save evaluation outputs for separate analysis
+os.makedirs("analysis", exist_ok=True)
+np.save("analysis/eval_labels.npy", true_labels)
+np.save("analysis/eval_preds.npy", preds)
+np.save("analysis/eval_probs.npy", probs)
 
+print("✅ Evaluation outputs saved in 'analysis/' folder")
+
+# ------------------------------
+# 🔟 Confusion matrix
+# ------------------------------
 cm = confusion_matrix(true_labels, preds)
 plt.figure(figsize=(8,6))
 sns.heatmap(cm, annot=True, fmt='d', xticklabels=label_names, yticklabels=label_names, cmap="Blues")
 plt.xlabel("Predicted")
 plt.ylabel("True")
 plt.title("Confusion Matrix")
-plt.show()
+plt.savefig("analysis/confusion_matrix.png")
+plt.close()
 
 # ------------------------------
-# 🔟 Prediction function for new data
+# 1️⃣1️⃣ Plot metrics per epoch
 # ------------------------------
-def predict(texts):
-    enc = tokenizer(texts, padding=True, truncation=True, max_length=128, return_tensors='pt')
-    model.eval()
-    with torch.no_grad():
-        outputs = model(**enc)
-        probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
-        preds = torch.argmax(probs, dim=1).cpu().numpy()
-    return [label_names[i] for i in preds], probs.cpu().numpy()
+metrics_history = trainer.state.log_history
 
-# Example usage
-examples = ["Power outage in my neighborhood", "Water supply issue for days"]
-pred_labels, pred_probs = predict(examples)
-for t, l, p in zip(examples, pred_labels, pred_probs):
-    print(f"Text: {t}\nPredicted: {l}\nProbabilities: {p}\n")
+epochs, train_loss, eval_loss, accuracy_list, f1_list = [], [], [], [], []
+for log in metrics_history:
+    if 'epoch' in log:
+        if 'loss' in log:
+            epochs.append(log['epoch'])
+            train_loss.append(log['loss'])
+        if 'eval_loss' in log:
+            eval_loss.append(log['eval_loss'])
+        if 'eval_accuracy' in log:
+            accuracy_list.append(log['eval_accuracy'])
+        if 'eval_f1' in log:
+            f1_list.append(log['eval_f1'])
+
+sns.set(style="whitegrid")
+
+# Loss plot
+plt.figure(figsize=(10,6))
+plt.plot(epochs, train_loss, label="Train Loss", marker='o')
+plt.plot(epochs, eval_loss, label="Eval Loss", marker='o')
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.title("Training & Evaluation Loss per Epoch")
+plt.legend()
+plt.savefig("analysis/loss_plot.png")
+plt.close()
+
+# Accuracy & F1 plot
+plt.figure(figsize=(10,6))
+plt.plot(epochs, accuracy_list, label="Accuracy", marker='o', color='green')
+plt.plot(epochs, f1_list, label="F1 Score", marker='o', color='red')
+plt.xlabel("Epochs")
+plt.ylabel("Score")
+plt.title("Accuracy & F1 Score per Epoch")
+plt.legend()
+plt.savefig("analysis/score_plot.png")
+plt.close()
+
+print("📈 All analysis plots saved in 'analysis/' folder.")

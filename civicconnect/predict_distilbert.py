@@ -1,30 +1,41 @@
-# predict_distilbert.py
-
 import torch
 from transformers import DistilBertForSequenceClassification, DistilBertTokenizerFast
-import joblib
 import os
 
-# Load everything
-model = DistilBertForSequenceClassification.from_pretrained('model/distilbert_model')
-tokenizer = DistilBertTokenizerFast.from_pretrained('model/tokenizer')
-label_encoder = joblib.load('model/label_encoder.pkl')
+# ------------------------------
+# Load model & tokenizer
+# ------------------------------
+model_dir = "best_model"
+model = DistilBertForSequenceClassification.from_pretrained(model_dir)
+tokenizer = DistilBertTokenizerFast.from_pretrained(model_dir)
 
+# Load labels
+with open(os.path.join(model_dir, "labels.txt"), "r") as f:
+    label_names = [line.strip() for line in f.readlines()]
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
 model.eval()
 
+# ------------------------------
+# Prediction function
+# ------------------------------
 def predict(text):
-    inputs = tokenizer(text, return_tensors='pt', truncation=True, padding=True, max_length=128)
+    enc = tokenizer(text, padding=True, truncation=True, max_length=128, return_tensors='pt').to(device)
     with torch.no_grad():
-        outputs = model(**inputs)
-    predicted = torch.argmax(outputs.logits, dim=1).item()
-    return label_encoder.inverse_transform([predicted])[0]
+        outputs = model(**enc)
+        probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
+        pred_idx = torch.argmax(probs, dim=-1).item()
+        return label_names[pred_idx], probs[0, pred_idx].item()
 
-# Loop for interactive testing
+# ------------------------------
+# Interactive loop
+# ------------------------------
 if __name__ == "__main__":
-    print("Complaint Classifier Ready. Type 'q' to quit.")
+    print("💡 Complaint Classifier Ready. Type 'q' to quit.")
     while True:
         complaint = input("Enter complaint: ")
         if complaint.lower() == 'q':
             break
-        label = predict(complaint)
-        print(f"Predicted Category: {label}\n")
+        label, prob = predict(complaint)
+        print(f"Predicted Category: {label} (Probability: {prob:.4f})\n")

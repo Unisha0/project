@@ -1,0 +1,4 @@
+electricity
+garbage
+road
+water

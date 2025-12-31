@@ -14,6 +14,8 @@ frequent load shedding,electricity
 no electricity at night,electricity
 repair team not coming,electricity
 street light broken,electricity
+no water due to powercut,electricity
+dehydration due to powercut,electricity
 "Residents report street lights not working in their area, affecting daily life and safety.",electricity
 "Residents report voltage fluctuation damaging appliances in their area, affecting daily life and safety.",electricity
 "Residents report frequent power cuts in their area, affecting daily life and safety.",electricity
@@ -5061,6 +5063,9 @@ no water during daytime,water
 water pressure zero,water
 supply cuts frequently,water
 dirty water after pipe fix,water
+water shortage causing health issues,water
+leakage not fixed for weeks,water
+dehydration due to sortage of water,water
 "Residents report muddy and contaminated drinking water in their locality, causing hygiene problems and affecting daily life.",water
 "Residents report overflowing water tanks flooding streets in their locality, causing hygiene problems and affecting daily life.",water
 "Residents report muddy and contaminated drinking water in their locality, causing hygiene problems and affecting daily life.",water

@@ -13,5 +13,7 @@
   {"complaint_text":"frequent load shedding","department":"Electricity","location":"Pokhara","severity":"medium"},
   {"complaint_text":"no electricity at night","department":"Electricity","location":"Birgunj","severity":"high"},
   {"complaint_text":"repair team not coming","department":"Electricity","location":"Lalitpur","severity":"medium"},
-  {"complaint_text":"street light broken","department":"Electricity","location":"Kathmandu","severity":"medium"}
+  {"complaint_text":"street light broken","department":"Electricity","location":"Kathmandu","severity":"medium"},
+  {"complaint_text":"no water due to powercut","department":"Electricity","location":"Dhangadhi","severity":"high"},
+  {"complaint_text":"dehydration due to powercut","department":"Electricity","location":"Biratnagar","severity":"high"}
 ]
