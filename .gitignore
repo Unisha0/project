@@ -1,1 +1,8 @@
 venv/
+model/
+generated/
+data/
+*.pt
+*.bin
+*.h5
+
