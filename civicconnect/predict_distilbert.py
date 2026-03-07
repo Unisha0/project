@@ -18,24 +18,51 @@ model.to(device)
 model.eval()
 
 # ------------------------------
+# Confidence threshold
+# ------------------------------
+CONFIDENCE_THRESHOLD = 0.70   # 70%
+
+# ------------------------------
 # Prediction function
 # ------------------------------
 def predict(text):
-    enc = tokenizer(text, padding=True, truncation=True, max_length=128, return_tensors='pt').to(device)
+    enc = tokenizer(
+        text,
+        padding=True,
+        truncation=True,
+        max_length=128,
+        return_tensors="pt"
+    ).to(device)
+
     with torch.no_grad():
         outputs = model(**enc)
         probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
-        pred_idx = torch.argmax(probs, dim=-1).item()
-        return label_names[pred_idx], probs[0, pred_idx].item()
+
+    pred_idx = torch.argmax(probs, dim=-1).item()
+    pred_prob = probs[0, pred_idx].item()
+
+    # Confidence-based rejection
+    if pred_prob < CONFIDENCE_THRESHOLD:
+        return "❌ Complaint not classified (Uncertain)", pred_prob
+
+    return label_names[pred_idx], pred_prob
 
 # ------------------------------
-# Interactive loop
+# Interactive terminal
 # ------------------------------
 if __name__ == "__main__":
-    print("💡 Complaint Classifier Ready. Type 'q' to quit.")
+    print("💡 Complaint Classifier Ready.")
+    print("⚠️  Low-confidence complaints will be marked as 'Uncertain'")
+    print("Type 'q' to quit.\n")
+
     while True:
         complaint = input("Enter complaint: ")
-        if complaint.lower() == 'q':
+        if complaint.lower() == "q":
             break
+
         label, prob = predict(complaint)
-        print(f"Predicted Category: {label} (Probability: {prob:.4f})\n")
+
+        if "Uncertain" in label:
+            print(f"{label} (Confidence: {prob:.4f})\n")
+        else:
+            print(f"Predicted Category: {label} (Confidence: {prob:.4f})\n")
