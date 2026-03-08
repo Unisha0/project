@@ -1,0 +1,248 @@
+================================================================================
+    NEPALI CIVIC COMPLAINT CLASSIFICATION — DISTILBERT MULTILINGUAL NOTES
+    CivicConnect Project
+    Date: March 7, 2026
+================================================================================
+
+
+TABLE OF CONTENTS
+-----------------
+1. Tokenization
+2. The Tokenizer Problem for Nepali
+3. Pre-trained Language Models (PLMs)
+4. Key Concepts Before Training
+5. Preprocessing Pipeline
+6. Model Recommendations
+7. Dataset Summary
+8. Training Strategy
+9. Evaluation Metrics
+10. Next Steps
+
+
+================================================================================
+1. TOKENIZATION — HOW TEXT BECOMES NUMBERS
+================================================================================
+
+Models don't read text — they read numbers. Tokenization splits text into
+smaller units (tokens) and maps each to a numerical ID.
+
+Three Levels of Tokenization:
+-----------------------------
+
+a) Word-level Tokenization
+   Example (Nepali): ["हाम्रो", "टोलमा", "बत्ती", "छैन"]
+   Pros:  Intuitive, preserves word boundaries
+   Cons:  Huge vocabulary size, can't handle unseen/rare words (OOV problem)
+
+b) Character-level Tokenization
+   Example (Nepali): ["ह", "ा", "म", "्", "र", "ो"]
+   Pros:  Very small vocabulary, handles any word
+   Cons:  Very long sequences, loses word-level semantics
+
+c) Subword Tokenization (WordPiece)
+   Example (Nepali): ["हाम्", "##रो", "टोल", "##मा", "बत्ती"]
+   Pros:  Best balance — small vocab, handles unseen words via subword merging
+   Cons:  Needs a pre-trained tokenizer for the target language
+
+   This is the standard approach used by DistilBERT multilingual and BERT-family models.
+
+---
+
+2. THE TOKENIZER PROBLEM FOR NEPALI
+================================================================================
+
+Your English-only DistilBERT model cannot handle Devanagari:
+
+   Input:  "हाम्रो टोलमा बत्ती छैन"
+   Tokens: ["[UNK]", "[UNK]", "[UNK]", "[UNK]"]
+
+Solution: Use **distilbert-base-multilingual-cased** tokenizer.
+
+Example:
+
+   Input: "हाम्रो टोलमा बत्ती छैन"
+   Tokens: ["हाम्", "##रो", "टोल", "##मा", "बत्ती", "छैन"]
+
+Meaningful subwords, no [UNK] problem.
+
+Comparison of Multilingual Tokenizers:
+--------------------------------------
++---------------------------------------+------------------+----------------+--------+
+| Model                                 | Tokenizer        | Nepali Support | Params |
++---------------------------------------+------------------+----------------+--------+
+| distilbert-base-multilingual-cased    | WordPiece 110K   | Yes            | 66M    |
+| bert-base-multilingual-cased          | WordPiece 110K   | Yes            | 110M   |
+| xlm-roberta-base                      | SentencePiece 250K| Best          | 125M   |
++---------------------------------------+------------------+----------------+--------+
+
+---
+
+3. PRE-TRAINED LANGUAGE MODELS (PLMs)
+================================================================================
+
+What is a Pre-trained Language Model?
+-------------------------------------
+A model trained on massive amounts of unlabeled text using self-supervised objectives:
+
+- Masked Language Modeling (MLM): Mask random tokens, predict them from context.
+  Example: "हाम्रो टोलमा [MASK] छैन" → predict "बत्ती"
+
+- These models learn grammar, semantics, and domain knowledge transferable to your task.
+
+Types of Models:
+----------------
+a) Encoder-only (BERT / DistilBERT):
+   - Best for classification, NER, sentiment analysis
+   - Includes: DistilBERT, BERT, RoBERTa
+   - This is what you need for complaint classification
+
+b) Decoder-only (GPT-family):
+   - Best for text generation
+
+c) Encoder-Decoder (T5/BART-family):
+   - Best for translation, summarization
+
+---
+
+4. KEY CONCEPTS BEFORE TRAINING
+================================================================================
+
+a) Fine-tuning
+   - Take a pre-trained DistilBERT multilingual
+   - Add a classification head (linear layer: 768 → 4 classes)
+   - Train on your labeled dataset
+   - Typical config: 3-5 epochs, learning rate 2e-5, batch size 16-32
+
+b) Embeddings
+   - Each token → 768-dimensional vector
+   - Contextual embeddings differentiate word meaning per sentence
+
+c) Attention Mechanism
+   - Multi-head self-attention focuses on relevant words in input
+   - For "बत्ती आउँदैन", attention highlights "बत्ती"
+
+d) Transfer Learning
+   - Pre-training on 100+ languages → fine-tuning on Nepali complaints
+   - Reduces data needed for good performance
+
+e) Label Encoding
+   - electricity → 0
+   - water       → 1
+   - road        → 2
+   - garbage     → 3
+
+f) Loss Function: Cross-Entropy Loss for multi-class classification
+g) Optimizer: AdamW, lr=2e-5
+h) Padding & Truncation: max_length=128, attention_mask differentiates padding
+
+
+================================================================================
+5. PREPROCESSING PIPELINE
+================================================================================
+
+Raw CSV → Merge → Clean → Tokenize → Encode → DataLoader → Model
+
+Steps:
+------
+1. Merge CSVs: electricity, water, road, garbage → one DataFrame
+2. Label encode categories {electricity:0, water:1, road:2, garbage:3}
+3. Light text cleaning: whitespace, punctuation, stray English removed
+4. Tokenization: DistilBERT multilingual tokenizer → token IDs & attention masks
+5. Dataset creation: train/val/test splits
+6. Dataloader: batch_size=16–32, shuffle training data
+7. Training: fine-tune model, save best checkpoint based on val loss
+
+
+================================================================================
+6. MODEL RECOMMENDATIONS
+================================================================================
+
++----+------------------------------------+-----------------------------------+-------------------+
+| #  | Model                              | Why                               | When to Use       |
++----+------------------------------------+-----------------------------------+-------------------+
+| 1  | distilbert-base-multilingual-cased | Fast, small (66M), supports Nepali| PRIMARY CHOICE    |
+| 2  | bert-base-multilingual-cased       | Widely tested, good baseline      | Alternative       |
+| 3  | TF-IDF + SVM / Naive Bayes         | Classical ML baseline             | Quick evaluation  |
++----+------------------------------------+-----------------------------------+-------------------+
+
+
+================================================================================
+7. DATASET SUMMARY
+================================================================================
+
+Files:
+  electricity_nepali.csv — 2,659 complaints
+  water_nepali.csv       — 2,557 complaints
+  road_nepali.csv        — 2,544 complaints
+  garbage_nepali.csv     — 2,547 complaints
+
+Total: ~10,307 complaints
+Categories: 4
+Sources: manual (307), hello_sarkar (10,000)
+Split: train 80%, val 10%, test 10%
+Language: Nepali (Devanagari), styles: emotional, frustrated, short, long, implicit, slangy
+
+
+================================================================================
+8. TRAINING STRATEGY
+================================================================================
+
+Hyperparameters:
+----------------
+Model: distilbert-base-multilingual-cased
+Max sequence len: 128
+Batch size: 16–32
+Learning rate: 2e-5
+Epochs: 3–5
+Optimizer: AdamW
+Scheduler: Linear with warmup
+Early stopping: 2 epochs patience
+
+Optional Data Augmentation:
+- Back-translation (Nepali→Hindi→Nepali)
+- Synonym replacement
+- Random deletion/insertion of words
+
+
+================================================================================
+9. EVALUATION METRICS
+================================================================================
+
+Primary:
+- Accuracy
+- F1 Score (macro & weighted)
+
+Per-class:
+- Precision, Recall, F1
+- Confusion matrix (4×4)
+- Classification report
+
+Expected performance:
+- ~88–93% accuracy with DistilBERT multilingual
+- Short/implicit complaints are hardest
+
+
+================================================================================
+10. NEXT STEPS
+================================================================================
+
+1. Merge all CSVs → training dataset
+2. Install packages: transformers, torch, datasets, sklearn
+3. Write training script with DistilBERT multilingual
+4. Fine-tune model
+5. Evaluate → confusion matrix & classification report
+6. Compare with TF-IDF + SVM baseline
+7. Error analysis on misclassified samples
+8. Build inference script for new complaints
+9. (Optional) Web interface demo
+
+References:
+- Hello Sarkar: Nepali grievance portal inspiration
+- OPMCM Gunaso Portal
+- HuggingFace Transformers: https://huggingface.co/transformers/
+- DistilBERT paper: "DistilBERT, a distilled version of BERT" (Sanh et al., 2019)
+
+
+================================================================================
+    END OF DISTILBERT MULTILINGUAL RESEARCH NOTES
+================================================================================

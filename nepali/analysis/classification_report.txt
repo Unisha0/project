@@ -1,0 +1,16 @@
+CivicConnect — Nepali Complaint Classification Report
+Model: distilbert-base-multilingual-cased
+Test Accuracy: 1.0000
+Test F1 (weighted): 1.0000
+Test F1 (macro): 1.0000
+
+              precision    recall  f1-score   support
+
+ electricity     1.0000    1.0000    1.0000       266
+       water     1.0000    1.0000    1.0000       255
+        road     1.0000    1.0000    1.0000       254
+     garbage     1.0000    1.0000    1.0000       254
+
+    accuracy                         1.0000      1029
+   macro avg     1.0000    1.0000    1.0000      1029
+weighted avg     1.0000    1.0000    1.0000      1029

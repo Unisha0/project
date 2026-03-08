@@ -1,8 +1,6 @@
 venv/
-model/
-generated/
-data/
-*.pt
-*.bin
-*.h5
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
 
